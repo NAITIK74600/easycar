@@ -1,7 +1,7 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
-import { ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface CinematicHeroProps {
   onRentClick?: () => void;
@@ -16,42 +16,6 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
   const headlineRef = useRef<HTMLHeadingElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const badgeRef = useRef<HTMLDivElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [progress, setProgress] = useState<number>(0);
-
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    const current = videoRef.current.currentTime;
-    const dur = videoRef.current.duration || 1;
-    setProgress((current / dur) * 100);
-  };
-
-  const handleSeek = (val: number) => {
-    if (!videoRef.current) return;
-    const dur = videoRef.current.duration || 1;
-    videoRef.current.currentTime = (val / 100) * dur;
-    setProgress(val);
-  };
-
-  const handleReset = () => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = 0;
-    videoRef.current.play();
-    setIsPlaying(true);
-  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -87,16 +51,12 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
       {/* ── Background Automotive Video with Fallback Poster ── */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <video
-          ref={videoRef}
           src="/hf_20261015_195744_725e4105-b360-4701-8f78-1d2719e1fdb7.mp4"
           poster="/assets/cinematic/audi_a5_hero.jpg"
           autoPlay
           loop
           muted
           playsInline
-          onTimeUpdate={handleTimeUpdate}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
           className="w-full h-full object-cover object-[center_right] lg:object-right-center filter brightness-[1.04] contrast-[1.05]"
         />
 
@@ -203,61 +163,6 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Seamless Automotive Video & Sequence Control HUD ── */}
-      <div className="section-container relative z-20 w-full px-6 sm:px-8 lg:px-12 pt-4 pb-2">
-        <div className="flex flex-wrap items-center justify-between gap-4 py-2.5 px-4 bg-black/70 backdrop-blur-md border border-white/10 rounded-sm">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-brand-red text-white transition-colors cursor-pointer"
-              title={isPlaying ? 'Pause' : 'Play'}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <Pause size={12} /> : <Play size={12} className="ml-0.5" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/15 text-silver hover:text-white transition-colors cursor-pointer"
-              title="Restart"
-              aria-label="Restart"
-            >
-              <RotateCcw size={11} />
-            </button>
-
-            <span className="font-mono text-[10px] text-silver tracking-widest uppercase font-bold">
-              CINEMATIC REVEAL
-            </span>
-          </div>
-
-          {/* Interactive Timeline Scrubber Bar */}
-          <div className="flex-1 max-w-md mx-2 relative py-1 flex items-center cursor-pointer group">
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              value={progress}
-              onChange={(e) => handleSeek(parseFloat(e.target.value))}
-              className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-brand-red focus:outline-none"
-              aria-label="Timeline position"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/fleet/audi-a5-sportback"
-              className="font-mono text-[10px] text-white hover:text-brand-red tracking-wider uppercase font-semibold flex items-center gap-1.5 transition-colors"
-            >
-              <span>INSPECT VEHICLE</span>
-              <ArrowRight size={11} className="text-brand-red" />
-            </Link>
           </div>
         </div>
       </div>
