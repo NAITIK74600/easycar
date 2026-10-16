@@ -1,0 +1,15 @@
+services:
+  easycars-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: easycars-biel
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - CORS_ORIGIN=*
+    volumes:
+      - ./server/data:/app/server/data

@@ -1,0 +1,331 @@
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────
+   EASY CARS BIEL — Design System & Luxury Typography
+   Cinematic Swiss automotive luxury design tokens
+   ─────────────────────────────────────────────── */
+
+@theme {
+  /* ── Brand & Color Palette ── */
+  --color-obsidian: #080808;
+  --color-charcoal: #121214;
+  --color-graphite: #1a1a1e;
+  --color-gunmetal: #26262b;
+  --color-steel: #484852;
+  --color-silver: #8e8e99;
+  --color-ash: #aeaeb8;
+  --color-mist: #c7c7d1;
+  --color-pearl: #f0f0f5;
+  --color-white: #ffffff;
+
+  /* Official Easy Cars Biel Red */
+  --color-brand-red: #e11d2a;
+  --color-brand-red-light: #ff3b47;
+  --color-brand-red-dark: #b80d18;
+  --color-accent: #e11d2a;
+  --color-gold: #c9a96e;
+
+  /* Functional */
+  --color-success: #30d158;
+  --color-warning: #ffd60a;
+  --color-error: #e11d2a;
+
+  /* ── Typography (Luxury Roman Display & Editorial UI) ── */
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Space Mono', 'SF Mono', monospace;
+
+  /* ── Spacing ── */
+  --spacing-section: 7rem;
+  --spacing-section-mobile: 4rem;
+
+  /* ── Easing ── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+/* ───────────────────────────────────────────────
+   Base Styles
+   ─────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-obsidian);
+    color: var(--color-pearl);
+    font-family: var(--font-body);
+  }
+
+  body {
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+    background-color: var(--color-obsidian);
+  }
+
+  ::selection {
+    background-color: var(--color-brand-red);
+    color: #ffffff;
+  }
+
+  /* Refined Luxury Scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #080808;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #26262b;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand-red);
+  }
+}
+
+/* ───────────────────────────────────────────────
+   Luxury Editorial Typography
+   ─────────────────────────────────────────────── */
+
+@layer components {
+  .heading-hero {
+    font-family: var(--font-display);
+    font-size: clamp(2.75rem, 8.5vw, 7.5rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .heading-section {
+    font-family: var(--font-display);
+    font-size: clamp(1.85rem, 4.5vw, 3.75rem);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.05;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .heading-subsection {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.8vw, 1.85rem);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.25;
+    text-transform: uppercase;
+    color: var(--color-pearl);
+  }
+
+  .label-technical {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-silver);
+  }
+
+  .body-large {
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--color-ash);
+  }
+
+  /* ── Luxury Buttons ── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.95rem 2.25rem;
+    background-color: var(--color-brand-red);
+    color: #ffffff;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid var(--color-brand-red);
+    cursor: pointer;
+    transition: all 0.35s var(--ease-out-expo);
+    box-shadow: 0 4px 20px rgba(225, 29, 42, 0.25);
+  }
+  .btn-primary:hover {
+    background-color: var(--color-brand-red-light);
+    border-color: var(--color-brand-red-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(225, 29, 42, 0.45);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.95rem 2.25rem;
+    background-color: transparent;
+    color: var(--color-white);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    transition: all 0.35s var(--ease-out-expo);
+  }
+  .btn-outline:hover {
+    border-color: var(--color-brand-red);
+    color: var(--color-brand-red);
+    background: rgba(225, 29, 42, 0.05);
+  }
+
+  /* ── Container Layout ── */
+  .section-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 5rem);
+  }
+
+  .section-spacing {
+    padding-top: var(--spacing-section);
+    padding-bottom: var(--spacing-section);
+  }
+
+  @media (max-width: 768px) {
+    .section-spacing {
+      padding-top: var(--spacing-section-mobile);
+      padding-bottom: var(--spacing-section-mobile);
+    }
+  }
+
+  .separator {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(225, 29, 42, 0.4), var(--color-gunmetal), transparent);
+  }
+
+  /* ── Subtle Film Grain ── */
+  .grain-overlay::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .card-dark {
+    background: var(--color-charcoal);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.35s ease;
+  }
+  .card-dark:hover {
+    border-color: rgba(225, 29, 42, 0.35);
+  }
+
+  /* ── Form Inputs ── */
+  .input-dark {
+    width: 100%;
+    padding: 0.85rem 1.15rem;
+    background: var(--color-graphite);
+    border: 1px solid var(--color-gunmetal);
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.25s ease;
+  }
+  .input-dark:focus {
+    border-color: var(--color-brand-red);
+  }
+
+  .select-dark {
+    width: 100%;
+    padding: 0.85rem 1.15rem;
+    background: var(--color-graphite);
+    border: 1px solid var(--color-gunmetal);
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23e11d2a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    transition: border-color 0.25s ease;
+  }
+  .select-dark:focus {
+    border-color: var(--color-brand-red);
+  }
+
+  /* ── Cinematic Text Shimmer ── */
+  .shimmer-text {
+    background: linear-gradient(
+      110deg,
+      #ffffff 20%,
+      rgba(225, 29, 42, 0.9) 45%,
+      #ffffff 65%,
+      #aeaeb8 90%
+    );
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: textShimmer 5s ease-in-out infinite;
+  }
+
+  @keyframes textShimmer {
+    0% {
+      background-position: 200% center;
+    }
+    100% {
+      background-position: -200% center;
+    }
+  }
+
+  /* ── Telemetry HUD Glow ── */
+  .hud-glow {
+    box-shadow: 0 0 25px rgba(225, 29, 42, 0.25);
+  }
+}
+
+/* Lenis Smooth Scrolling Optimizations */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
