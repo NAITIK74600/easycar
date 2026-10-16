@@ -56,9 +56,16 @@ $prodPackageJson = @'
 
 Set-Content -Path (Join-Path $stagingDir "package.json") -Value $prodPackageJson -Encoding UTF8
 
-# Copy server.js and dist folder
+# Copy server.js, app.js, index.js and dist folder
 Copy-Item -Path (Join-Path $rootDir "server.js") -Destination $stagingDir -Force
+Copy-Item -Path (Join-Path $rootDir "app.js") -Destination $stagingDir -Force
+Copy-Item -Path (Join-Path $rootDir "index.js") -Destination $stagingDir -Force
 Copy-Item -Path $distPath -Destination $stagingDir -Recurse -Force
+
+Write-Host "Installing production dependencies (express, cors) directly into package..."
+Push-Location $stagingDir
+npm install --omit=dev --no-audit --no-fund --quiet
+Pop-Location
 
 # Create ZIP
 [System.IO.Compression.ZipFile]::CreateFromDirectory($stagingDir, $webAppZip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
@@ -69,10 +76,13 @@ $zip2 = [System.IO.Compression.ZipFile]::OpenRead($webAppZip)
 $hasPkg = ($zip2.Entries | Where-Object { $_.FullName -eq "package.json" }) -ne $null
 $hasServer = ($zip2.Entries | Where-Object { $_.FullName -eq "server.js" }) -ne $null
 $hasDist = ($zip2.Entries | Where-Object { $_.FullName -like "dist/index.html" -or $_.FullName -like "dist\index.html" }) -ne $null
+$hasNm = ($zip2.Entries | Where-Object { $_.FullName -like "node_modules/express/*" -or $_.FullName -like "node_modules\express\*" }) -ne $null
 $zip2.Dispose()
 
 Write-Host "easycars-hostinger-webapp.zip ready! ($([math]::Round((Get-Item $webAppZip).Length / 1MB, 2)) MB)"
 Write-Host "Has package.json at root: $hasPkg"
 Write-Host "Has server.js at root: $hasServer"
 Write-Host "Has dist/index.html: $hasDist"
+Write-Host "Has pre-installed node_modules: $hasNm"
 Write-Host "ALL HOSTINGER PACKAGES FULLY READY FOR INSTANT DEPLOYMENT!"
+
