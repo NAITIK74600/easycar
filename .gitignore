@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+dist/sequences/
 dist-ssr
 *.local
 
@@ -27,3 +27,6 @@ dist-ssr
 *.zip
 landing video in sequence
 temp_staging_webapp/
+package.dev.json
+server/dist/
+

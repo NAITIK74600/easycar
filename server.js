@@ -425,19 +425,31 @@ app.post('/api/contact', (req, res) => {
   res.json({ success: true, message: 'Message sent successfully' });
 });
 
-// Serve frontend static assets from dist
+// Serve frontend static assets from dist and public
 const distPath = path.join(__dirname, 'dist');
+const publicPath = path.join(__dirname, 'public');
+
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.url.startsWith('/api')) return next();
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-} else {
-  app.get('/', (req, res) => {
-    res.send('Easy Cars Biel API is online. Build frontend with npm run build to serve website.');
-  });
 }
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+}
+
+app.get('*', (req, res, next) => {
+  if (req.url.startsWith('/api')) return next();
+  const indexCandidates = [
+    path.join(distPath, 'index.html'),
+    path.join(publicPath, 'index.html'),
+    path.join(__dirname, 'index.html'),
+  ];
+  for (const candidate of indexCandidates) {
+    if (fs.existsSync(candidate)) {
+      return res.sendFile(candidate);
+    }
+  }
+  res.send('Easy Cars Biel platform is online.');
+});
 
 if (isSocket) {
   app.listen(PORT, () => {
