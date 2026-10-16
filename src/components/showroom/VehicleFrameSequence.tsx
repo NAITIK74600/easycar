@@ -30,6 +30,7 @@ interface VehicleFrameSequenceProps {
   className?: string;
   enableScrollScrub?: boolean;
   initialFrame?: number;
+  externalProgress?: number;
   onHotspotSelect?: (hotspot: SequenceHotspot | null) => void;
   onBookClick?: () => void;
 }
@@ -39,6 +40,7 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
   className = '',
   enableScrollScrub = false,
   initialFrame = 0,
+  externalProgress,
   onHotspotSelect,
   onBookClick,
 }) => {
@@ -378,9 +380,17 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
     }
   };
 
-  // Scroll-driven frame progression when scrolling the page
+  // Synchronize with external scroll progress from pinned showroom
   useEffect(() => {
-    if (isPlaying) return;
+    if (externalProgress !== undefined && !isPlaying) {
+      const target = Math.round(externalProgress * (totalFrames - 1));
+      seekToFrame(target);
+    }
+  }, [externalProgress, isPlaying, seekToFrame, totalFrames]);
+
+  // Scroll-driven frame progression when scrolling the page (fallback if external progress is not provided)
+  useEffect(() => {
+    if (isPlaying || externalProgress !== undefined) return;
 
     const handleWindowScroll = () => {
       if (!containerRef.current) return;
@@ -400,10 +410,11 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
 
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleWindowScroll);
-  }, [isPlaying, seekToFrame, totalFrames]);
+  }, [isPlaying, externalProgress, seekToFrame, totalFrames]);
 
-  // Mouse wheel frame scrubbing
+  // Mouse wheel frame scrubbing (only active when not using external scroll-pinned track)
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (externalProgress !== undefined) return;
     const delta = Math.sign(e.deltaY) * 3;
     seekToFrame(currentFrameRef.current + delta);
   };
@@ -442,6 +453,18 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
             <span className="text-white/30">/</span>
             <span>{totalSeconds}s</span>
           </div>
+          <span className="text-white/20">•</span>
+          <span className="text-[10px] text-white/50 tracking-wider">
+            FRAME {currentFrame + 1}/{totalFrames}
+          </span>
+          <button
+            onClick={toggleFullscreen}
+            className="flex items-center justify-center w-6 h-6 rounded-xs bg-white/5 hover:bg-white/20 text-silver hover:text-white transition-colors ml-1 cursor-pointer"
+            title="Toggle fullscreen"
+            aria-label="Toggle fullscreen"
+          >
+            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+          </button>
         </div>
       </div>
 
@@ -524,104 +547,6 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
             })}
           </div>
         )}
-      </div>
-
-      {/* 4. Luxury Cinematic Timeline Scrubber */}
-      <div className="relative z-20 px-4 py-3 bg-neutral-950 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          {/* Play / Pause Toggle */}
-          <button
-            onClick={() => setIsPlaying((prev) => !prev)}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-red-600 text-white transition-colors"
-            title={isPlaying ? 'Pause (Space)' : 'Play reveal (Space)'}
-          >
-            {isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
-          </button>
-
-          {/* Reset Frame */}
-          <button
-            onClick={() => seekToFrame(0)}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 text-silver hover:text-white transition-colors"
-            title="Reset to beginning"
-          >
-            <RotateCcw size={13} />
-          </button>
-
-          {/* Step Back 1 Frame */}
-          <button
-            onClick={() => seekToFrame(currentFrame - 1)}
-            className="flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-white/15 text-silver hover:text-white transition-colors text-xs"
-            title="Previous frame (Left arrow)"
-          >
-            <ChevronLeft size={14} />
-          </button>
-
-          {/* Scrubber Track */}
-          <div className="relative flex-1 py-2 cursor-pointer group">
-            <input
-              type="range"
-              min={0}
-              max={totalFrames - 1}
-              value={currentFrame}
-              onChange={(e) => seekToFrame(parseInt(e.target.value, 10))}
-              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-red-600 focus:outline-none"
-            />
-            {/* Progress glow bar */}
-            <div
-              className="absolute top-1/2 left-0 -translate-y-1/2 h-1.5 bg-red-600 pointer-events-none rounded-l-lg"
-              style={{ width: `${(currentFrame / (totalFrames - 1)) * 100}%` }}
-            />
-          </div>
-
-          {/* Step Forward 1 Frame */}
-          <button
-            onClick={() => seekToFrame(currentFrame + 1)}
-            className="flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-white/15 text-silver hover:text-white transition-colors text-xs"
-            title="Next frame (Right arrow)"
-          >
-            <ChevronRight size={14} />
-          </button>
-
-          {/* Playback Speed selector */}
-          <div className="hidden sm:flex items-center gap-1 border-l border-white/10 pl-3">
-            {[0.5, 1.0, 2.0].map((speed) => (
-              <button
-                key={speed}
-                onClick={() => setPlaybackSpeed(speed)}
-                className={`px-2 py-0.5 text-[10px] font-mono transition-colors ${
-                  playbackSpeed === speed
-                    ? 'bg-red-600 text-white font-bold'
-                    : 'bg-white/5 text-silver hover:text-white'
-                }`}
-              >
-                {speed}x
-              </button>
-            ))}
-          </div>
-
-          {/* Hotspots Toggle */}
-          <button
-            onClick={() => setShowHotspots((prev) => !prev)}
-            className={`px-2.5 py-1 text-[11px] font-mono flex items-center gap-1.5 border transition-colors ${
-              showHotspots
-                ? 'bg-red-600/20 border-red-500/50 text-red-400'
-                : 'bg-white/5 border-white/10 text-silver'
-            }`}
-            title="Toggle component hotspots"
-          >
-            <Sparkles size={11} />
-            <span className="hidden md:inline">HOTSPOTS</span>
-          </button>
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 text-silver hover:text-white transition-colors"
-            title="Toggle fullscreen"
-          >
-            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          </button>
-        </div>
       </div>
 
       {/* 5. Hotspot Detail Drawer / Modal (When a part is inspected) */}

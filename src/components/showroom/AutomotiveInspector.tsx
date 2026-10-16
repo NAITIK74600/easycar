@@ -87,11 +87,9 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
     specs?: Record<string, string>;
   } | null>(null);
 
-  // 6. Timeline and Sequence Progress State
-  const [sequenceProgress, setSequenceProgress] = useState<number>(28); // 0 to 100 percentage
-  const [isPlayingSequence, setIsPlayingSequence] = useState<boolean>(false);
-
-  // Viewport Container Ref
+  // 6. Sticky Scroll Pinned Progress State
+  const [scrollProgress, setScrollProgress] = useState<number>(0); // 0.0 to 1.0
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Clamp pan so image edges never collapse into empty void
@@ -263,6 +261,12 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
 
   // Mode tab change
   const handleTabChange = (tab: 'reveal' | 'exterior' | 'interior' | 'studio') => {
+    if (activeTab === 'reveal' && tab !== 'reveal') {
+      if (trackRef.current) {
+        const top = window.scrollY + trackRef.current.getBoundingClientRect().top - 72;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+      }
+    }
     setActiveTab(tab);
     handleResetView();
   };
@@ -284,25 +288,28 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedHotspot, lightboxImage, handleResetView, handleNavigateHotspot]);
 
-  // Synchronize bottom timeline scrubber indicator with page scrolling in reveal mode
+  // Calculate pinned frame progress when in reveal mode
   useEffect(() => {
     if (activeTab !== 'reveal') return;
 
     const handleWindowScroll = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
+      if (!trackRef.current) return;
+      const rect = trackRef.current.getBoundingClientRect();
+      const pinTop = 72; // Clearance beneath fixed navbar
+      const stickyHeight = window.innerHeight - pinTop;
+      const scrollableDistance = rect.height - stickyHeight;
 
-      if (rect.bottom >= 0 && rect.top <= windowHeight) {
-        const totalDistance = windowHeight + rect.height;
-        const scrollOffset = windowHeight - rect.top;
-        const rawProgress = scrollOffset / totalDistance;
-        const clamped = Math.max(0, Math.min(100, Math.round(rawProgress * 100)));
-        setSequenceProgress(clamped);
-      }
+      if (scrollableDistance <= 0) return;
+
+      const scrolledPast = pinTop - rect.top;
+      const rawProgress = scrolledPast / scrollableDistance;
+      const clamped = Math.max(0, Math.min(1, rawProgress));
+      setScrollProgress(clamped);
     };
 
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    handleWindowScroll();
+
     return () => window.removeEventListener('scroll', handleWindowScroll);
   }, [activeTab]);
 
@@ -312,10 +319,103 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
     : 1;
   const totalCount = currentHotspots.length || 3;
 
+  // Render authoritative 4-column highlights strip
+  const renderVehicleHighlights = () => (
+    <div className="w-full bg-[#0d0e12] border-t border-white/10 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/10 font-mono">
+      {/* Highlight 1: quattro AWD */}
+      <div className="p-4 sm:p-5 flex items-center gap-3.5">
+        <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
+          <div className="flex items-center -space-x-1">
+            <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
+          </div>
+        </div>
+        <div>
+          <span className="block text-white font-bold text-xs uppercase tracking-wider">
+            QUATTRO AWD
+          </span>
+          <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
+            CONFIDENCE IN EVERY DRIVE
+          </span>
+        </div>
+      </div>
+
+      {/* Highlight 2: Sportback Design */}
+      <div className="p-4 sm:p-5 flex items-center gap-3.5">
+        <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
+          <span className="w-3.5 h-3.5 border-t-2 border-r-2 border-white/80 rotate-[-45deg] inline-block" />
+        </div>
+        <div>
+          <span className="block text-white font-bold text-xs uppercase tracking-wider">
+            SPORTBACK DESIGN
+          </span>
+          <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
+            DYNAMIC AND ELEGANT
+          </span>
+        </div>
+      </div>
+
+      {/* Highlight 3: Premium Interior */}
+      <div className="p-4 sm:p-5 flex items-center gap-3.5">
+        <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
+          <Layers size={15} className="text-white/80" />
+        </div>
+        <div>
+          <span className="block text-white font-bold text-xs uppercase tracking-wider">
+            PREMIUM INTERIOR
+          </span>
+          <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
+            CRAFTED FOR COMFORT
+          </span>
+        </div>
+      </div>
+
+      {/* Highlight 4: Swiss Location & Booking CTA */}
+      <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5">
+          <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
+            <MapPin size={15} className="text-brand-red" />
+          </div>
+          <div>
+            <span className="block text-white font-bold text-xs uppercase tracking-wider">
+              PIETERLEN · SWITZERLAND
+            </span>
+            <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
+              LOCAL PICKUP & PERSONAL SUPPORT
+            </span>
+          </div>
+        </div>
+
+        <Link
+          to={`/booking?vehicle=${vehicleBookingSlug}`}
+          onClick={onBookClick}
+          className="hidden sm:inline-flex items-center gap-2 py-2 px-4 bg-brand-red hover:bg-brand-red-light text-white font-mono text-[11px] font-bold uppercase tracking-wider transition-all shadow-md shrink-0"
+        >
+          <span>RENT {vehicleShortName}</span>
+          <ArrowRight size={12} />
+        </Link>
+      </div>
+    </div>
+  );
+
   return (
     <div
-      className={`relative w-full bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none ${className}`}
+      ref={trackRef}
+      className={
+        activeTab === 'reveal'
+          ? `relative w-full h-[320vh] ${className}`
+          : `relative w-full ${className}`
+      }
     >
+      <div
+        className={
+          activeTab === 'reveal'
+            ? 'sticky top-[72px] w-full h-[calc(100vh-80px)] min-h-[580px] flex flex-col bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none z-20'
+            : 'relative w-full bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none'
+        }
+      >
       {/* ── 1. TOP MODE SELECTOR TABS (Reference Design Pill Bar — Dynamic Reveal First) ── */}
       <div className="relative z-30 w-full pt-4 pb-2 px-4 sm:px-6 flex flex-col items-center gap-3 bg-gradient-to-b from-black/90 to-transparent">
         {/* Sleek Dark Capsule Pill */}
@@ -442,14 +542,21 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
       </div>
 
       {/* ── 3. MAIN VEHICLE VIEWPORT CANVAS ── */}
-      <div className="relative w-full h-[540px] sm:h-[620px] lg:h-[720px] xl:h-[760px] bg-obsidian overflow-hidden">
-        {/* Mode A: 457-Frame Dynamic Reveal (1st & Default) with Scroll Scrub */}
+      <div
+        className={
+          activeTab === 'reveal'
+            ? 'flex-1 w-full min-h-0 bg-black flex flex-col justify-center overflow-hidden relative'
+            : 'relative w-full h-[540px] sm:h-[620px] lg:h-[720px] xl:h-[760px] bg-obsidian overflow-hidden'
+        }
+      >
+        {/* Mode A: 457-Frame Dynamic Reveal with Pinned Scroll Progression */}
         {activeTab === 'reveal' && (
           <div className="w-full h-full flex flex-col justify-center bg-black">
             <VehicleFrameSequence
               config={AUDI_A5_HERO_SEQUENCE}
               className="w-full h-full"
               enableScrollScrub={true}
+              externalProgress={scrollProgress}
               onBookClick={onBookClick}
             />
           </div>
@@ -477,6 +584,42 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
               scale > 1.0 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
             }`}
           >
+            {/* Discreet Top-Right Floating Zoom Controls for Photographic Mode */}
+            <div className="absolute top-4 right-4 z-30 flex items-center gap-1 bg-black/75 backdrop-blur-md border border-white/10 px-2 py-1 rounded-sm shadow-xl pointer-events-auto">
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                className="p-1 text-silver hover:text-white transition-colors cursor-pointer"
+                title="Zoom Out"
+                aria-label="Zoom Out"
+              >
+                <ZoomOut size={12} />
+              </button>
+              <span className="px-1.5 text-[10px] font-mono font-bold text-white tracking-wider">
+                {scale.toFixed(1)}x
+              </span>
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                className="p-1 text-silver hover:text-white transition-colors cursor-pointer"
+                title="Zoom In"
+                aria-label="Zoom In"
+              >
+                <ZoomIn size={12} />
+              </button>
+              {scale > 1.0 && (
+                <button
+                  type="button"
+                  onClick={handleResetView}
+                  className="ml-1 pl-1.5 border-l border-white/20 p-1 text-[10px] font-mono text-silver hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Reset View"
+                  aria-label="Reset View"
+                >
+                  <RotateCcw size={10} />
+                  <span>RESET</span>
+                </button>
+              )}
+            </div>
             {/* Smooth Zoom & Pan Transform Plane */}
             <div
               className="w-full h-full relative origin-center"
@@ -669,191 +812,18 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
           </div>
         )}
 
-        {/* ── 5. REFINED BOTTOM CONTROL STRIP (Reference Image Style) ── */}
-        <div className="absolute bottom-4 left-4 right-4 z-30 pointer-events-none">
-          <div className="flex flex-wrap items-center justify-between gap-3 py-2 px-4 bg-black/75 backdrop-blur-md border border-white/10 rounded-sm pointer-events-auto shadow-2xl">
-            {/* Left: Play/Pause & Dynamic State Label */}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeTab === 'reveal') {
-                    setIsPlayingSequence(!isPlayingSequence);
-                  } else {
-                    handleResetView();
-                  }
-                }}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-brand-red text-white transition-colors cursor-pointer"
-                title={isPlayingSequence ? 'Pause' : 'Play'}
-                aria-label={isPlayingSequence ? 'Pause' : 'Play'}
-              >
-                {isPlayingSequence ? <Pause size={12} /> : <Play size={12} className="ml-0.5" />}
-              </button>
-
-              <span className="font-mono text-[10px] sm:text-[11px] text-silver tracking-widest uppercase font-bold">
-                {activeTab === 'studio'
-                  ? 'DRAG TO ROTATE • 360 VIEWPOINTS'
-                  : activeTab === 'reveal'
-                  ? 'DYNAMIC REVEAL • SCROLL OR DRAG TO EXPLORE'
-                  : selectedHotspot
-                  ? `${selectedHotspot.name}`
-                  : 'INSPECT VEHICLE • CLICK HOTSPOTS'}
-              </span>
-            </div>
-
-            {/* Center: Precision Graduated Timeline Track with Ticks and Position Indicator */}
-            <div className="flex-1 max-w-md mx-2 relative py-2 flex items-center cursor-pointer group">
-              {/* Background Tick Marks Ruler */}
-              <div className="w-full h-2 flex items-center justify-between px-1 opacity-40 group-hover:opacity-80 transition-opacity">
-                {Array.from({ length: 41 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={`w-[1px] bg-white/40 ${
-                      i % 5 === 0 ? 'h-2 bg-white/80' : 'h-1'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Slider Track with Red Indicator */}
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={0.5}
-                value={sequenceProgress}
-                onChange={(e) => setSequenceProgress(parseFloat(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                aria-label="Timeline position"
-              />
-
-              {/* Active Red Position Indicator Dot */}
-              <span
-                style={{ left: `${sequenceProgress}%` }}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-brand-red shadow-[0_0_10px_#e11d2a] pointer-events-none transition-all duration-75"
-              />
-            </div>
-
-            {/* Right: Zoom & Reset Controls */}
-            <div className="flex items-center gap-2 font-mono text-xs">
-              <div className="flex items-center bg-black/60 border border-white/10 px-1 py-0.5">
-                <button
-                  type="button"
-                  onClick={handleZoomOut}
-                  className="px-2 py-1 text-silver hover:text-white transition-colors cursor-pointer"
-                  title="Zoom Out"
-                  aria-label="Zoom Out"
-                >
-                  <ZoomOut size={12} />
-                </button>
-                <span className="px-2 text-[10px] font-bold text-white tracking-wider">
-                  {scale.toFixed(1)}x
-                </span>
-                <button
-                  type="button"
-                  onClick={handleZoomIn}
-                  className="px-2 py-1 text-silver hover:text-white transition-colors cursor-pointer"
-                  title="Zoom In"
-                  aria-label="Zoom In"
-                >
-                  <ZoomIn size={12} />
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleResetView}
-                className="px-2.5 py-1.5 bg-black/60 border border-white/10 hover:border-white/30 text-silver hover:text-white text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Reset View"
-                aria-label="Reset View"
-              >
-                <RotateCcw size={11} />
-                <span>RESET</span>
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* ── 6. VEHICLE HIGHLIGHTS STRIP (Directly Beneath Main Canvas) ── */}
-      <div className="w-full bg-[#0d0e12] border-t border-white/10 grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-white/10 font-mono">
-        {/* Highlight 1: quattro AWD */}
-        <div className="p-4 sm:p-5 flex items-center gap-3.5">
-          <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
-            {/* Audi 4-Rings Emulation */}
-            <div className="flex items-center -space-x-1">
-              <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
-              <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
-              <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
-              <span className="w-2.5 h-2.5 rounded-full border border-white/80 inline-block" />
-            </div>
-          </div>
-          <div>
-            <span className="block text-white font-bold text-xs uppercase tracking-wider">
-              {isA3 ? 'QUATTRO AWD' : 'QUATTRO AWD'}
-            </span>
-            <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
-              CONFIDENCE IN EVERY DRIVE
-            </span>
-          </div>
-        </div>
+      {/* When in non-reveal mode, render Highlights Strip inside the showroom box */}
+      {activeTab !== 'reveal' && renderVehicleHighlights()}
+    </div>
 
-        {/* Highlight 2: Sportback Design */}
-        <div className="p-4 sm:p-5 flex items-center gap-3.5">
-          <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
-            <span className="w-3.5 h-3.5 border-t-2 border-r-2 border-white/80 rotate-[-45deg] inline-block" />
-          </div>
-          <div>
-            <span className="block text-white font-bold text-xs uppercase tracking-wider">
-              SPORTBACK DESIGN
-            </span>
-            <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
-              DYNAMIC AND ELEGANT
-            </span>
-          </div>
-        </div>
-
-        {/* Highlight 3: Premium Interior */}
-        <div className="p-4 sm:p-5 flex items-center gap-3.5">
-          <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
-            <Layers size={15} className="text-white/80" />
-          </div>
-          <div>
-            <span className="block text-white font-bold text-xs uppercase tracking-wider">
-              PREMIUM INTERIOR
-            </span>
-            <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
-              CRAFTED FOR COMFORT
-            </span>
-          </div>
-        </div>
-
-        {/* Highlight 4: Swiss Location & Booking CTA */}
-        <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center shrink-0">
-              <MapPin size={15} className="text-brand-red" />
-            </div>
-            <div>
-              <span className="block text-white font-bold text-xs uppercase tracking-wider">
-                PIETERLEN · SWITZERLAND
-              </span>
-              <span className="block text-[10px] text-silver tracking-wider uppercase mt-0.5">
-                LOCAL PICKUP & PERSONAL SUPPORT
-              </span>
-            </div>
-          </div>
-
-          <Link
-            to={`/booking?vehicle=${vehicleBookingSlug}`}
-            onClick={onBookClick}
-            className="hidden sm:inline-flex items-center gap-2 py-2 px-4 bg-brand-red hover:bg-brand-red-light text-white font-mono text-[11px] font-bold uppercase tracking-wider transition-all shadow-md shrink-0"
-          >
-            <span>RENT {vehicleShortName}</span>
-            <ArrowRight size={12} />
-          </Link>
-        </div>
+    {/* When in reveal mode, render Highlights Strip directly beneath the 320vh scroll track so user smoothly scrolls into it after frame completion */}
+    {activeTab === 'reveal' && (
+      <div className="w-full border border-white/10 shadow-2xl mt-4">
+        {renderVehicleHighlights()}
       </div>
+    )}
 
       {/* ── 7. FULLSCREEN HIGH-RESOLUTION COMPONENT LIGHTBOX MODAL ── */}
       {lightboxImage && (
