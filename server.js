@@ -8,10 +8,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '3000', 10);
+
+// Support numeric TCP ports and Unix sockets (used by Hostinger LiteSpeed/Passenger)
+const rawPort = process.env.PORT || '3000';
+const isSocket = isNaN(Number(rawPort));
+const PORT = isSocket ? rawPort : Number(rawPort);
 
 app.use(cors());
 app.use(express.json());
+
+// Health check endpoint for Hostinger load balancers & uptime checks
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // In-memory / persistent file storage for Hostinger
 const DATA_FILE = path.join(__dirname, 'bookings_data.json');
@@ -430,6 +439,19 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Easy Cars Biel server running on port ${PORT}`);
+if (isSocket) {
+  app.listen(PORT, () => {
+    console.log(`Easy Cars Biel server running on socket: ${PORT}`);
+  });
+} else {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Easy Cars Biel server running on port: ${PORT}`);
+  });
+}
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
