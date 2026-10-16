@@ -419,9 +419,6 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
     seekToFrame(currentFrameRef.current + delta);
   };
 
-  // Calculate current timestamp formatted mm:ss.ms
-  const currentSeconds = (currentFrame / config.fps).toFixed(2);
-  const totalSeconds = (totalFrames / config.fps).toFixed(2);
 
   return (
     <div
@@ -447,23 +444,14 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-xs font-mono text-silver pointer-events-auto">
-          <div className="flex items-center gap-1.5 text-white/80">
-            <span>{currentSeconds}s</span>
-            <span className="text-white/40">/</span>
-            <span>{totalSeconds}s</span>
-          </div>
-          <span className="text-white/30">•</span>
-          <span className="text-[10px] text-white/60 tracking-wider">
-            FRAME {currentFrame + 1}/{totalFrames}
-          </span>
+        <div className="flex items-center gap-2 pointer-events-auto">
           <button
             onClick={toggleFullscreen}
-            className="flex items-center justify-center w-6 h-6 rounded-xs bg-white/10 hover:bg-white/25 text-silver hover:text-white transition-colors ml-1 cursor-pointer"
+            className="flex items-center justify-center w-7 h-7 rounded-xs bg-black/50 hover:bg-white/20 border border-white/10 text-silver hover:text-white transition-colors cursor-pointer"
             title="Toggle fullscreen"
             aria-label="Toggle fullscreen"
           >
-            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
           </button>
         </div>
       </div>
