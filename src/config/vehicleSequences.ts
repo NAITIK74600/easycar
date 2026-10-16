@@ -38,11 +38,11 @@ export const AUDI_A5_HERO_SEQUENCE: VehicleSequenceConfig = {
   id: 'audi-a5-landing-sequence',
   vehicleSlug: 'audi-a5-sportback',
   vehicleName: 'Audi A5 Sportback 3.0 TDI quattro S-Line',
-  title: 'Cinematic Dynamic Approach & Reveal',
+  title: 'Dynamic Vehicle Reveal & Stance',
   subtitle: '457 High-Fidelity 1080p Sequential Frames',
   mode: 'cinematic-approach',
   description:
-    'High-resolution cinematic tracking shot of the Audi A5 Sportback S-Line, revealing the aerodynamic Daytona Grey bodywork, Singleframe matrix grille, and permanent quattro architecture.',
+    'High-resolution dynamic tracking approach of the Audi A5 Sportback S-Line, revealing the aerodynamic Daytona Grey bodywork, Singleframe matrix grille, and permanent quattro architecture.',
   totalFrames: 457,
   width: 1920,
   height: 1080,

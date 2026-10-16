@@ -33,14 +33,14 @@ import { Vehicle } from '../../types';
 interface AutomotiveInspectorProps {
   vehicle?: Vehicle | null;
   className?: string;
-  defaultTab?: 'exterior' | 'interior' | 'sequence' | 'studio';
+  defaultTab?: 'reveal' | 'exterior' | 'interior' | 'studio';
   onBookClick?: () => void;
 }
 
 export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
   vehicle,
   className = '',
-  defaultTab = 'exterior',
+  defaultTab = 'reveal',
   onBookClick,
 }) => {
   // Determine vehicle configuration
@@ -53,8 +53,8 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
   const vehicleShortName = isA3 ? 'AUDI A3' : 'AUDI A5';
   const vehicleBookingSlug = isA3 ? 'audi-a3-sportback' : 'audi-a5-sportback';
 
-  // 1. Active Navigation Mode Tab
-  const [activeTab, setActiveTab] = useState<'exterior' | 'interior' | 'sequence' | 'studio'>(defaultTab);
+  // 1. Active Navigation Mode Tab (Dynamic Reveal is First & Default)
+  const [activeTab, setActiveTab] = useState<'reveal' | 'exterior' | 'interior' | 'studio'>(defaultTab);
 
   // 2. Active View Angles
   const [selectedExteriorViewIndex, setSelectedExteriorViewIndex] = useState<number>(0);
@@ -262,7 +262,7 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
   };
 
   // Mode tab change
-  const handleTabChange = (tab: 'exterior' | 'interior' | 'sequence' | 'studio') => {
+  const handleTabChange = (tab: 'reveal' | 'exterior' | 'interior' | 'studio') => {
     setActiveTab(tab);
     handleResetView();
   };
@@ -284,6 +284,28 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedHotspot, lightboxImage, handleResetView, handleNavigateHotspot]);
 
+  // Synchronize bottom timeline scrubber indicator with page scrolling in reveal mode
+  useEffect(() => {
+    if (activeTab !== 'reveal') return;
+
+    const handleWindowScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      if (rect.bottom >= 0 && rect.top <= windowHeight) {
+        const totalDistance = windowHeight + rect.height;
+        const scrollOffset = windowHeight - rect.top;
+        const rawProgress = scrollOffset / totalDistance;
+        const clamped = Math.max(0, Math.min(100, Math.round(rawProgress * 100)));
+        setSequenceProgress(clamped);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [activeTab]);
+
   // Current selected component index
   const selectedIndex = selectedHotspot
     ? currentHotspots.findIndex((h) => h.id === selectedHotspot.id) + 1
@@ -294,13 +316,32 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
     <div
       className={`relative w-full bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none ${className}`}
     >
-      {/* ── 1. TOP MODE SELECTOR TABS (Reference Design Pill Bar) ── */}
+      {/* ── 1. TOP MODE SELECTOR TABS (Reference Design Pill Bar — Dynamic Reveal First) ── */}
       <div className="relative z-30 w-full pt-4 pb-2 px-4 sm:px-6 flex flex-col items-center gap-3 bg-gradient-to-b from-black/90 to-transparent">
         {/* Sleek Dark Capsule Pill */}
         <div
           role="tablist"
           className="flex items-center gap-1 sm:gap-2 p-1.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm shadow-2xl max-w-full overflow-x-auto scrollbar-none"
         >
+          {/* TAB 1: DYNAMIC REVEAL (1ST & DEFAULT TAB) */}
+          <button
+            role="tab"
+            aria-selected={activeTab === 'reveal'}
+            onClick={() => handleTabChange('reveal')}
+            className={`py-2 px-3.5 sm:px-5 font-mono text-[11px] sm:text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer border-b-2 ${
+              activeTab === 'reveal'
+                ? 'border-brand-red text-white font-bold bg-white/5 shadow-[0_2px_12px_rgba(225,29,42,0.3)]'
+                : 'border-transparent text-silver hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Sparkles
+              size={13}
+              className={activeTab === 'reveal' ? 'text-brand-red' : 'text-silver'}
+            />
+            <span>DYNAMIC REVEAL</span>
+          </button>
+
+          {/* TAB 2: EXTERIOR EXPLORER */}
           <button
             role="tab"
             aria-selected={activeTab === 'exterior'}
@@ -318,6 +359,7 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
             <span>EXTERIOR EXPLORER</span>
           </button>
 
+          {/* TAB 3: INTERIOR COCKPIT */}
           <button
             role="tab"
             aria-selected={activeTab === 'interior'}
@@ -335,23 +377,7 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
             <span>INTERIOR COCKPIT</span>
           </button>
 
-          <button
-            role="tab"
-            aria-selected={activeTab === 'sequence'}
-            onClick={() => handleTabChange('sequence')}
-            className={`py-2 px-3.5 sm:px-5 font-mono text-[11px] sm:text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer border-b-2 ${
-              activeTab === 'sequence'
-                ? 'border-brand-red text-white font-bold bg-white/5 shadow-[0_2px_12px_rgba(225,29,42,0.3)]'
-                : 'border-transparent text-silver hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Sparkles
-              size={13}
-              className={activeTab === 'sequence' ? 'text-brand-red' : 'text-silver'}
-            />
-            <span>CINEMATIC SEQUENCE</span>
-          </button>
-
+          {/* TAB 4: 360° STUDIO */}
           <button
             role="tab"
             aria-selected={activeTab === 'studio'}
@@ -415,14 +441,15 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
         )}
       </div>
 
-      {/* ── 3. MAIN CINEMATIC VEHICLE VIEWPORT CANVAS ── */}
+      {/* ── 3. MAIN VEHICLE VIEWPORT CANVAS ── */}
       <div className="relative w-full h-[540px] sm:h-[620px] lg:h-[720px] xl:h-[760px] bg-obsidian overflow-hidden">
-        {/* Mode A: 457-Frame Cinematic Sequence */}
-        {activeTab === 'sequence' && (
+        {/* Mode A: 457-Frame Dynamic Reveal (1st & Default) with Scroll Scrub */}
+        {activeTab === 'reveal' && (
           <div className="w-full h-full flex flex-col justify-center bg-black">
             <VehicleFrameSequence
               config={AUDI_A5_HERO_SEQUENCE}
               className="w-full h-full"
+              enableScrollScrub={true}
               onBookClick={onBookClick}
             />
           </div>
@@ -438,7 +465,7 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
         )}
 
         {/* Mode C: High-Fidelity Photographic Explorer Canvas */}
-        {activeTab !== 'studio' && activeTab !== 'sequence' && (
+        {activeTab !== 'studio' && activeTab !== 'reveal' && (
           <div
             ref={containerRef}
             onPointerDown={handlePointerDown}
@@ -650,7 +677,7 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (activeTab === 'sequence') {
+                  if (activeTab === 'reveal') {
                     setIsPlayingSequence(!isPlayingSequence);
                   } else {
                     handleResetView();
@@ -666,8 +693,8 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
               <span className="font-mono text-[10px] sm:text-[11px] text-silver tracking-widest uppercase font-bold">
                 {activeTab === 'studio'
                   ? 'DRAG TO ROTATE • 360 VIEWPOINTS'
-                  : activeTab === 'sequence'
-                  ? 'CINEMATIC SEQUENCE • 457 FRAMES'
+                  : activeTab === 'reveal'
+                  ? 'DYNAMIC REVEAL • SCROLL OR DRAG TO EXPLORE'
                   : selectedHotspot
                   ? `${selectedHotspot.name}`
                   : 'INSPECT VEHICLE • CLICK HOTSPOTS'}

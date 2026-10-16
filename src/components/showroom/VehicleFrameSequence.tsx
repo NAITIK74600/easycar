@@ -378,6 +378,36 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
     }
   };
 
+  // Scroll-driven frame progression when scrolling the page
+  useEffect(() => {
+    if (isPlaying) return;
+
+    const handleWindowScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      // When showroom is in viewport
+      if (rect.bottom >= 0 && rect.top <= windowHeight) {
+        const totalDistance = windowHeight + rect.height;
+        const scrollOffset = windowHeight - rect.top;
+        const rawProgress = scrollOffset / totalDistance;
+        const clamped = Math.max(0, Math.min(1, rawProgress));
+        const targetFrame = Math.round(clamped * (totalFrames - 1));
+        seekToFrame(targetFrame);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [isPlaying, seekToFrame, totalFrames]);
+
+  // Mouse wheel frame scrubbing
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const delta = Math.sign(e.deltaY) * 3;
+    seekToFrame(currentFrameRef.current + delta);
+  };
+
   // Calculate current timestamp formatted mm:ss.ms
   const currentSeconds = (currentFrame / config.fps).toFixed(2);
   const totalSeconds = (totalFrames / config.fps).toFixed(2);
@@ -392,13 +422,14 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onWheel={handleWheel}
     >
       {/* 1. Header Technical HUD Strip */}
       <div className="relative z-20 flex flex-wrap items-center justify-between px-4 py-3 bg-gradient-to-b from-black/90 to-transparent border-b border-white/5 gap-3">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-red/20 text-brand-red font-mono text-[10px] uppercase font-bold tracking-wider border border-brand-red/30">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse" />
-            CINEMATIC EXPLORER
+            DYNAMIC REVEAL
           </span>
           <span className="text-xs font-mono text-white font-bold tracking-wider uppercase">
             {config.vehicleName}
@@ -502,7 +533,7 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
           <button
             onClick={() => setIsPlaying((prev) => !prev)}
             className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-red-600 text-white transition-colors"
-            title={isPlaying ? 'Pause sequence (Space)' : 'Play cinematic sequence (Space)'}
+            title={isPlaying ? 'Pause (Space)' : 'Play reveal (Space)'}
           >
             {isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
           </button>
