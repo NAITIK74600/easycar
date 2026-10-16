@@ -97,16 +97,12 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
           onTimeUpdate={handleTimeUpdate}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          className="w-full h-full object-cover object-[center_right] lg:object-right-center filter brightness-[0.90] contrast-[1.08]"
+          className="w-full h-full object-cover object-[center_right] lg:object-right-center filter brightness-[1.04] contrast-[1.05]"
         />
 
-        {/* Cinematic Multi-Pass Vignette & Gradient for Crisp Readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 lg:via-obsidian/60 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/80 to-transparent pointer-events-none" />
-
-        {/* Ambient Red Illumination matching automotive lights */}
-        <div className="absolute top-1/3 right-1/4 w-[500px] h-[300px] bg-brand-red/10 blur-[140px] rounded-full pointer-events-none" />
+        {/* Clean, Non-Obstructive Readability Gradient (Left-side text shadow only) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian/90 via-obsidian/30 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-obsidian/80 to-transparent pointer-events-none" />
       </div>
 
       {/* ── Top Location Label ── */}
