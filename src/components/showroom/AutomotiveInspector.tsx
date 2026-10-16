@@ -303,7 +303,9 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
 
       const scrolledPast = pinTop - rect.top;
       const rawProgress = scrolledPast / scrollableDistance;
-      const clamped = Math.max(0, Math.min(1, rawProgress));
+      // Allow ending frames to complete cleanly and rest with full view before unpinning
+      const effectiveProgress = Math.min(1, rawProgress / 0.92);
+      const clamped = Math.max(0, Math.min(1, effectiveProgress));
       setScrollProgress(clamped);
     };
 
@@ -405,19 +407,19 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
       ref={trackRef}
       className={
         activeTab === 'reveal'
-          ? `relative w-full h-[320vh] ${className}`
+          ? `relative w-full h-[340vh] ${className}`
           : `relative w-full ${className}`
       }
     >
       <div
         className={
           activeTab === 'reveal'
-            ? 'sticky top-[72px] w-full h-[calc(100vh-80px)] min-h-[580px] flex flex-col bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none z-20'
+            ? 'sticky top-[66px] w-full h-[calc(100vh-70px)] min-h-[600px] flex flex-col bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none z-20'
             : 'relative w-full bg-[#080809] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.95)] overflow-hidden select-none'
         }
       >
       {/* ── 1. TOP MODE SELECTOR TABS (Reference Design Pill Bar — Dynamic Reveal First) ── */}
-      <div className="relative z-30 w-full pt-4 pb-2 px-4 sm:px-6 flex flex-col items-center gap-3 bg-gradient-to-b from-black/90 to-transparent">
+      <div className="relative z-30 w-full pt-3 pb-2 px-4 sm:px-6 flex flex-col items-center gap-3 bg-gradient-to-b from-black/90 to-transparent">
         {/* Sleek Dark Capsule Pill */}
         <div
           role="tablist"

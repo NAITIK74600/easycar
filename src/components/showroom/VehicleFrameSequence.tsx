@@ -426,7 +426,7 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full bg-black/90 border border-white/10 rounded-sm overflow-hidden select-none transition-all duration-300 ${
+      className={`relative w-full h-full flex flex-col bg-black/90 border border-white/10 rounded-sm overflow-hidden select-none transition-all duration-300 ${
         isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''
       } ${className}`}
       onPointerDown={handlePointerDown}
@@ -436,7 +436,7 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
       onWheel={handleWheel}
     >
       {/* 1. Header Technical HUD Strip */}
-      <div className="relative z-20 flex flex-wrap items-center justify-between px-4 py-3 bg-gradient-to-b from-black/90 to-transparent border-b border-white/5 gap-3">
+      <div className="relative z-20 flex flex-wrap items-center justify-between px-4 py-2 bg-gradient-to-b from-black/90 to-transparent border-b border-white/5 gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-red/20 text-brand-red font-mono text-[10px] uppercase font-bold tracking-wider border border-brand-red/30">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse" />
@@ -468,85 +468,87 @@ export const VehicleFrameSequence: React.FC<VehicleFrameSequenceProps> = ({
         </div>
       </div>
 
-      {/* 2. Main Canvas Viewport Area */}
-      <div className="relative w-full aspect-video flex items-center justify-center bg-radial from-neutral-900 to-black overflow-hidden cursor-ew-resize">
-        <canvas
-          ref={canvasRef}
-          width={config.width}
-          height={config.height}
-          className="w-full h-full object-contain pointer-events-none"
-        />
-
-        {/* Poster / Fallback element before canvas buffers */}
-        {!isInitialReady && (
-          <img
-            src={config.posterUrl}
-            alt={config.vehicleName}
-            className="absolute inset-0 w-full h-full object-contain"
+      {/* 2. Main Canvas Viewport Area — Fully constrained with bottom padding so ending frame is never cut */}
+      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center bg-radial from-neutral-900 to-black overflow-hidden cursor-ew-resize px-2 sm:px-4 pt-1 pb-4 sm:pb-7">
+        <div className="relative aspect-video max-w-full max-h-full w-full flex items-center justify-center">
+          <canvas
+            ref={canvasRef}
+            width={config.width}
+            height={config.height}
+            className="w-full h-full object-contain pointer-events-none drop-shadow-2xl"
           />
-        )}
 
-        {/* Loading Spinner & Progress Overlay */}
-        {!isInitialReady && (
-          <div className="absolute inset-0 bg-black/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-30">
-            <div className="w-8 h-8 rounded-full border-2 border-red-500/20 border-t-red-500 animate-spin" />
-          </div>
-        )}
+          {/* Poster / Fallback element before canvas buffers */}
+          {!isInitialReady && (
+            <img
+              src={config.posterUrl}
+              alt={config.vehicleName}
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            />
+          )}
 
-        {/* 3. Hotspots Overlay on top of sequence */}
-        {showHotspots && isInitialReady && (
-          <div className="absolute inset-0 pointer-events-none z-10">
-            {activeHotspots.map((h) => {
-              const isSelected = selectedHotspot?.id === h.id;
-              const isHovered = hoveredHotspot?.id === h.id;
+          {/* Loading Spinner & Progress Overlay */}
+          {!isInitialReady && (
+            <div className="absolute inset-0 bg-black/85 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-30">
+              <div className="w-8 h-8 rounded-full border-2 border-red-500/20 border-t-red-500 animate-spin" />
+            </div>
+          )}
 
-              return (
-                <div
-                  key={h.id}
-                  data-hotspot
-                  style={{ top: `${h.y}%`, left: `${h.x}%` }}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto transition-transform duration-200"
-                  onMouseEnter={() => setHoveredHotspot(h)}
-                  onMouseLeave={() => setHoveredHotspot(null)}
-                >
-                  <button
-                    onClick={() => handleHotspotClick(h)}
-                    className="relative group p-2 focus:outline-none"
-                    aria-label={`Inspect ${h.name}`}
+          {/* 3. Hotspots Overlay on top of sequence */}
+          {showHotspots && isInitialReady && (
+            <div className="absolute inset-0 pointer-events-none z-10">
+              {activeHotspots.map((h) => {
+                const isSelected = selectedHotspot?.id === h.id;
+                const isHovered = hoveredHotspot?.id === h.id;
+
+                return (
+                  <div
+                    key={h.id}
+                    data-hotspot
+                    style={{ top: `${h.y}%`, left: `${h.x}%` }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto transition-transform duration-200"
+                    onMouseEnter={() => setHoveredHotspot(h)}
+                    onMouseLeave={() => setHoveredHotspot(null)}
                   >
-                    {/* Pulsing beacon */}
-                    <span
-                      className={`absolute inset-0 rounded-full transition-all duration-300 ${
-                        isSelected
-                          ? 'bg-red-500/40 animate-ping'
-                          : 'bg-white/20 group-hover:bg-red-500/30'
-                      }`}
-                    />
-
-                    {/* Core icon disc */}
-                    <span
-                      className={`relative flex items-center justify-center w-7 h-7 rounded-full border transition-all duration-300 ${
-                        isSelected
-                          ? 'bg-red-600 border-white text-white scale-110 shadow-[0_0_15px_rgba(230,0,0,0.8)]'
-                          : 'bg-black/80 border-red-500/70 text-red-400 group-hover:scale-110 group-hover:border-red-400 group-hover:text-white'
-                      }`}
+                    <button
+                      onClick={() => handleHotspotClick(h)}
+                      className="relative group p-2 focus:outline-none"
+                      aria-label={`Inspect ${h.name}`}
                     >
-                      <Sparkles size={13} />
-                    </span>
+                      {/* Pulsing beacon */}
+                      <span
+                        className={`absolute inset-0 rounded-full transition-all duration-300 ${
+                          isSelected
+                            ? 'bg-red-500/40 animate-ping'
+                            : 'bg-white/20 group-hover:bg-red-500/30'
+                        }`}
+                      />
 
-                    {/* Floating Tooltip Label */}
-                    {(isHovered || isSelected) && (
-                      <div className="absolute left-1/2 -top-10 -translate-x-1/2 px-3 py-1 bg-black/95 border border-red-500/50 text-white font-mono text-[11px] whitespace-nowrap shadow-xl z-20 pointer-events-none">
-                        <span className="text-red-400 font-bold mr-1.5">•</span>
-                        {h.name}
-                      </div>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                      {/* Core icon disc */}
+                      <span
+                        className={`relative flex items-center justify-center w-7 h-7 rounded-full border transition-all duration-300 ${
+                          isSelected
+                            ? 'bg-red-600 border-white text-white scale-110 shadow-[0_0_15px_rgba(230,0,0,0.8)]'
+                            : 'bg-black/80 border-red-500/70 text-red-400 group-hover:scale-110 group-hover:border-red-400 group-hover:text-white'
+                        }`}
+                      >
+                        <Sparkles size={13} />
+                      </span>
+
+                      {/* Floating Tooltip Label */}
+                      {(isHovered || isSelected) && (
+                        <div className="absolute left-1/2 -top-10 -translate-x-1/2 px-3 py-1 bg-black/95 border border-red-500/50 text-white font-mono text-[11px] whitespace-nowrap shadow-xl z-20 pointer-events-none">
+                          <span className="text-red-400 font-bold mr-1.5">•</span>
+                          {h.name}
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 5. Hotspot Detail Drawer / Modal (When a part is inspected) */}
