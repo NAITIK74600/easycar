@@ -547,13 +547,13 @@ export const AutomotiveInspector: React.FC<AutomotiveInspectorProps> = ({
       <div
         className={
           activeTab === 'reveal'
-            ? 'flex-1 w-full min-h-0 bg-black flex flex-col justify-center overflow-hidden relative'
+            ? 'flex-1 w-full min-h-0 bg-black flex flex-col overflow-hidden relative'
             : 'relative w-full h-[540px] sm:h-[620px] lg:h-[720px] xl:h-[760px] bg-obsidian overflow-hidden'
         }
       >
         {/* Mode A: 457-Frame Dynamic Reveal with Pinned Scroll Progression */}
         {activeTab === 'reveal' && (
-          <div className="w-full h-full flex flex-col justify-center bg-black">
+          <div className="w-full h-full flex flex-col bg-black">
             <VehicleFrameSequence
               config={AUDI_A5_HERO_SEQUENCE}
               className="w-full h-full"
